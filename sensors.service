@@ -1,0 +1,10 @@
+[Unit]
+Description=Py3 BME280 Sensor Suite
+
+[Service]
+User=root
+ExecStart=/usr/bin/python3 /home/inpw/sensors/bme.py
+WorkingDirectory=/home/inpw/sensors
+
+[Install]
+WantedBy=multi-user.target
