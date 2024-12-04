@@ -1,0 +1,6 @@
+[Unit]
+Description=Network Reconnect Service
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/python3 /home/inpw/sensors/network_reconnect.py
