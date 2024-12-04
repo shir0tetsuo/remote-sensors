@@ -7,6 +7,30 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 
 PORT = 80
 
+def get_wifi_signal_strength():
+    """
+    Fetch the Wi-Fi signal strength (RSSI) in dBm.
+    Returns:
+        signal_strength (int): Signal strength in dBm, or None if not connected.
+    """
+    try:
+        # Run the `iwconfig` command
+        result = subprocess.check_output(["iwconfig"], stderr=subprocess.DEVNULL, text=True)
+        
+        # Search for "Signal level" in the output
+        for line in result.splitlines():
+            if "Signal level" in line:
+                # Extract the signal level value
+                parts = line.split()
+                for part in parts:
+                    if "level=" in part:
+                        # Parse the dBm value
+                        signal_strength = int(part.split("=")[1].replace("dBm", ""))
+                        return signal_strength
+        return None
+    except subprocess.CalledProcessError:
+        return None
+
 def get_uptime():
     try:
         # Read uptime from /proc/uptime
@@ -43,13 +67,24 @@ class sensor:
 
 def get_sensor_data():
     data = sensor().data()
+    signal = get_wifi_signal_strength()
+    the_signal = None
+    if (signal):
+        if (signal>-30): the_signal = "Excellent"
+        elif (signal>-50): the_signal = "Very Good"
+        elif (signal>-60): the_signal = "Good"
+        elif (signal>-70): the_signal = "Fair"
+        elif (signal>-80): the_signal = "Weak"
+        elif (signal<-80): the_signal = "Very Poor"
+
     return {
         "temperature": str(round(data.temperature,2)) + ' °C',
         "humidity": str(round(data.humidity,2)) + ' rH',
         "pressure": str(round(data.pressure,2)) + ' hPa',
         "dt": str(datetime.now()),
         "cpu_temperature": get_cpu_temperature() + 'C',
-        "uptime": get_uptime()
+        "uptime": get_uptime(),
+        "signal": (str(signal)+f" dBm {the_signal}" if signal else " dBm")
     }
 
 class JSONRequestHandler(BaseHTTPRequestHandler):
